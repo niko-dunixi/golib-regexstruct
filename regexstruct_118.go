@@ -6,8 +6,6 @@ package regexstruct
 import (
 	"fmt"
 	"regexp"
-
-	"github.com/mitchellh/mapstructure"
 )
 
 type NoMatchError struct {
@@ -20,7 +18,11 @@ func (nme NoMatchError) Error() string {
 	return fmt.Sprintf("the regex (%s) did not match the input string (%s)", pattern, nme.input)
 }
 
-func RegexMatch[T any](r *regexp.Regexp, s string, item *T) error {
+type Unmarshaler interface {
+	Unmarshal(map[string]string) error
+}
+
+func RegexMatch[T Unmarshaler](r *regexp.Regexp, s string, item T) error {
 	matchedMap, isMatch := RegexMatchMap(r, s)
 	if !isMatch {
 		return NoMatchError{
@@ -28,5 +30,5 @@ func RegexMatch[T any](r *regexp.Regexp, s string, item *T) error {
 			input: s,
 		}
 	}
-	return mapstructure.Decode(matchedMap, item)
+	return item.Unmarshal(matchedMap)
 }
